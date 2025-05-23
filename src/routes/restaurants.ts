@@ -1,8 +1,13 @@
 import { Router } from "express";
+import { validate } from "../middlewares/validate.js";
+import { RestaurantSchema, type Restaurant } from "../schemas/restaurant.js";
 
 const router = Router();
 
-router.get("/", (req, res) => {
+// We use express chaining to validate the request body
+router.post("/", validate(RestaurantSchema), async (req, res) => {
+  // Now the req.body is validated, so we can assert it to the type
+  const data = req.body as Restaurant;
   res.send("Hello World");
 });
 
