@@ -15,13 +15,20 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
 
+    /* Performance optimizations */
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+
     /* If transpiling with TypeScript: */
     "module": "NodeNext",
     "outDir": "dist",
     "sourceMap": true,
 
     /* If your code doesn't run in the DOM: */
-    "lib": ["es2022"]
+    "lib": ["es2022"],
+
+    /* Limit @types inclusion */
+    "types": ["node"]
   },
   "include": [
     "src/**/*"

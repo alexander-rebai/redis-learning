@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "docker-compose up -d && tsx watch --env-file .env src/index.ts",
-    "build": "tsc",
+    "build": "tsc --build",
     "start": "node --env-file .env dist/index.js",
+    "type-check": "tsc --noEmit --incremental",
     "redis:start": "docker-compose up -d",
     "redis:stop": "docker-compose down",
     "redis:logs": "docker-compose logs -f redis",

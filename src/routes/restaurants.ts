@@ -5,6 +5,9 @@ import { validate } from "../middlewares/validate.js";
 import { RestaurantSchema, type Restaurant } from "../schemas/restaurant.js";
 import { ReviewSchema, type Review } from "../schemas/review.js";
 import {
+  cuisineKey,
+  cuisinesKey,
+  restaurantCusinesKeyByRestaurantId,
   restaurantKeyById,
   reviewDetailsKeyById,
   reviewKeyById,
@@ -29,7 +32,17 @@ router.post("/", validate(RestaurantSchema), async (req, res) => {
     location: data.location,
   };
 
-  await redisClient.hSet(restaurantKey, hashData); // Use Redis Hashing to store the restaurant details
+  await Promise.all([
+    redisClient.hSet(restaurantKey, hashData),
+    // We spread data because the result of the map is an array of arrays, and we want to add all the values to the Redis set.
+    ...data.cuisines.map((cuisine) =>
+      Promise.all([
+        redisClient.sAdd(cuisinesKey, cuisine),
+        redisClient.sAdd(cuisineKey(cuisine), id),
+        redisClient.sAdd(restaurantCusinesKeyByRestaurantId(id), cuisine),
+      ])
+    ),
+  ]);
 
   return successResponse(res, hashData, "Created new restaurant");
 });
@@ -123,12 +136,20 @@ router.get(
     const redisClient = await initializeRedisClient();
     const restaurantKey = restaurantKeyById(restaurantId);
 
-    const [viewcount, restaurant] = await Promise.all([
+    const [viewcount, restaurant, cuisines] = await Promise.all([
       redisClient.hIncrBy(restaurantKey, "viewCount", 1),
       redisClient.hGetAll(restaurantKey),
+      redisClient.sMembers(restaurantCusinesKeyByRestaurantId(restaurantId)),
     ]);
 
-    return successResponse(res, restaurant, "Restaurant fetched successfully");
+    return successResponse(
+      res,
+      {
+        ...restaurant,
+        cuisines,
+      },
+      "Restaurant fetched successfully"
+    );
   }
 );
 
